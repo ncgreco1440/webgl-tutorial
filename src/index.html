@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <!-- <div id="media-devices">
+    <button onclick="requestMedia({audio: true})">Attach Media Devices</button>
+  </div> -->
+
+  <canvas id="glCanvas" width="640" height="480"></canvas>
+
+  <div>
+    <span>Left Stick X - Axis: <span id="lsxa"></span></span>
+    <span>Left Stick Y - Axis: <span id="lsya"></span></span>
+    <span>Right Stick X - Axis: <span id="rsxa"></span></span>
+    <span>Right Stick Y - Axis: <span id="rsya"></span></span>
+  </div>
+
+  <gamepad-debug-table></gamepad-debug-table>
+
+  <script type="text/javascript">
+    // let stream;
+
+    // async function requestMedia(constraints) {
+    //   try {
+    //     stream = await navigator.mediaDevices.getUserMedia(constraints);
+    //     const d = document.createElement('media-device-list');
+    //     document.getElementById('media-devices').appendChild(d);
+    //   } catch(e) {
+    //     console.log(e);
+    //     return null;
+    //   }
+    // }
+  </script>
+</body>
+</html>
