@@ -1,21 +1,20 @@
-import './gamepad';
-// import './media';
+import { gameloop } from './gameloop';
 
 async function main() {
-  // beginPollInput();
+  gameloop();
 
-  const canvas = document.querySelector('#glCanvas') as HTMLCanvasElement;
+  // const canvas = document.querySelector('#glCanvas') as HTMLCanvasElement;
 
-  const gl = canvas.getContext('webgl');
+  // const gl = canvas.getContext('webgl');
 
-  if (gl == null) {
-    alert('Unable to initialize WebGL. Your browser or machine will not support it.');
-    return;
-  }
+  // if (gl == null) {
+  //   alert('Unable to initialize WebGL. Your browser or machine will not support it.');
+  //   return;
+  // }
 
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  // gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
-  gl.clear(gl.COLOR_BUFFER_BIT);
+  // gl.clear(gl.COLOR_BUFFER_BIT);
 }
 
 const vsShader = `
