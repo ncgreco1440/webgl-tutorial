@@ -6,6 +6,9 @@
     "module": "es6",
     "jsx": "react",
     "allowJs": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "typeRoots": [
+      "node_modules/@types"
+    ]
   }
 }

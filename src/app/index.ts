@@ -1,20 +1,34 @@
 import { gameloop } from './gameloop';
+import { mat4 } from 'gl-matrix';
 
-async function main() {
-  gameloop();
+export async function main() {
+  // gameloop();
 
-  // const canvas = document.querySelector('#glCanvas') as HTMLCanvasElement;
+  const canvas = document.querySelector('#glCanvas') as HTMLCanvasElement;
 
-  // const gl = canvas.getContext('webgl');
+  const gl = canvas.getContext('webgl');
 
-  // if (gl == null) {
-  //   alert('Unable to initialize WebGL. Your browser or machine will not support it.');
-  //   return;
-  // }
+  if (gl == null) {
+    alert('Unable to initialize WebGL. Your browser or machine will not support it.');
+    return;
+  }
 
-  // gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  const shaderProgram = initShaderProgram(gl, vsShader, fsShader);
 
-  // gl.clear(gl.COLOR_BUFFER_BIT);
+  const programInfo = {
+    program: shaderProgram,
+    attrLocations: {
+      vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition')
+    },
+    uniformLocations: {
+      projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
+      modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix')
+    }
+  }
+
+  const buffers = initBuffers(gl);
+
+  draw(gl, programInfo, buffers);
 }
 
 const vsShader = `
@@ -65,4 +79,74 @@ function loadShader(gl: WebGLRenderingContext, type: GLenum, source: string): We
   return shader;
 }
 
-window.onload = main;
+function initBuffers(gl: WebGLRenderingContext) {
+  const positionBuffer = gl.createBuffer();
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+  const positions = [
+    -1.0, 1.0,
+    1.0, 1.0,
+    -1.0, -1.0,
+    1.0, -1.0
+  ];
+
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+  return {
+    position: positionBuffer
+  }
+}
+
+function draw(gl: WebGLRenderingContext, programInfo, buffers) {
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clearDepth(1.0);
+  gl.enable(gl.DEPTH_TEST);
+  gl.depthFunc(gl.LEQUAL);
+
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  const fieldOfView = 45 * Math.PI / 180;
+  const aspect = gl.canvas.width / gl.canvas.height;
+  const zNear = 0.1;
+  const zFar = 1000.0;
+  const projectionMatrix = mat4.create();
+
+  mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
+
+  const modelViewMatrix = mat4.create();
+
+  mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, -6.0]);
+
+  // Tell WebGL how to pull out the positions from the position
+  // buffer into the vertexPosition attribute.
+  {
+    const numComponents = 2;
+    const type = gl.FLOAT;
+    const normalize = false;
+    const stride = 0;
+    const offset = 0;
+  
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+    gl.vertexAttribPointer(
+      programInfo.attrLocations.vertexPosition,
+      numComponents,
+      type,
+      normalize,
+      stride,
+      offset
+    );
+    gl.enableVertexAttribArray(programInfo.attrLocations.vertexPosition);
+  }
+
+  gl.useProgram(programInfo.program);
+
+  gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
+  gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
+
+  {
+    const offset = 0;
+    const vertexCount = 4;
+    gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
+  }
+}
