@@ -1,7 +1,10 @@
 import { gameloop } from './gameloop';
+import { Canvas } from './canvas';
 import { mat4 } from 'gl-matrix';
 
 export async function main() {
+  const MAIN_CANVAS = new Canvas('glCanvas');
+  MAIN_CANVAS.append();
   // gameloop();
 
   const canvas = document.querySelector('#glCanvas') as HTMLCanvasElement;
