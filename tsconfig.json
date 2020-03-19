@@ -9,6 +9,9 @@
     "sourceMap": true,
     "typeRoots": [
       "node_modules/@types"
+    ],
+    "types": [
+      "src/mods/raw-loader.d.ts"
     ]
   }
 }

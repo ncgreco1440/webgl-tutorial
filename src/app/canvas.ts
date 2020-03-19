@@ -24,6 +24,14 @@ export class Canvas {
     this._canvas.height = this.aspectRatio.aspectHeight;
   }
 
+  public get width(): number {
+    return this._canvas.width;
+  }
+
+  public get height(): number {
+    return this._canvas.height;
+  }
+
   private _canvas: HTMLCanvasElement;
   private _glContext: WebGLRenderingContext;
 }

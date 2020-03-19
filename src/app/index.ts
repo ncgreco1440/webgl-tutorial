@@ -2,6 +2,9 @@ import { Canvas, CanvasAspectRatio } from './canvas';
 import { mat4 } from 'gl-matrix';
 import { ShaderProgram, FragmentShader, VertexShader } from './shader';
 
+import basicVert from '!!raw-loader!./shaders/basic-vert.glsl';
+import basicFrag from '!!raw-loader!./shaders/basic-frag.glsl';
+
 // Camera
 const fieldOfView = 45 * Math.PI / 180;
 const aspect = CanvasAspectRatio.SIXTEEN_BY_NINE.ratio;
@@ -22,13 +25,13 @@ export async function main() {
   {
     const shaderProgram = new ShaderProgram(
       gl, 
-      new VertexShader(gl, vsShader), 
-      new FragmentShader(gl, fsShader));
+      new VertexShader(gl, basicVert), 
+      new FragmentShader(gl, basicFrag));
 
     const buffers = initBuffers(gl);
 
     function loop() {
-      draw(gl, shaderProgram, buffers);
+      draw(MAIN_CANVAS, shaderProgram, buffers);
       window.requestAnimationFrame(loop);
     }
 
@@ -36,24 +39,6 @@ export async function main() {
   }
   
 }
-
-const vsShader = `
-attribute vec4 aVertexPosition;
-
-uniform mat4 uModelViewMatrix;
-uniform mat4 uProjectionMatrix;
-
-void main() {
-  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-}
-`;
-
-const fsShader = `
-void main() {
-  gl_FragColor = vec4(0.25, 0.5, 1.0, 1.0);
-}
-`;
-
 
 function initBuffers(gl: WebGLRenderingContext) {
   const positionBuffer = gl.createBuffer();
@@ -73,13 +58,15 @@ function initBuffers(gl: WebGLRenderingContext) {
   }
 }
 
-function draw(gl: WebGLRenderingContext, program: ShaderProgram, buffers) {
+function draw(canvas: Canvas, program: ShaderProgram, buffers) {
+  const gl = canvas.getContext();
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clearDepth(1.0);
   gl.enable(gl.DEPTH_TEST);
   gl.depthFunc(gl.LEQUAL);
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.viewport(0, 0, canvas.width, canvas.height);
 
   mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
 
@@ -89,21 +76,15 @@ function draw(gl: WebGLRenderingContext, program: ShaderProgram, buffers) {
 
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute.
-  {
-    const numComponents = 2;
-    const type = gl.FLOAT;
-    const normalize = false;
-    const stride = 0;
-    const offset = 0;
-  
+  {  
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
     gl.vertexAttribPointer(
       program.getAttribLocation('aVertexPosition'),
-      numComponents,
-      type,
-      normalize,
-      stride,
-      offset
+      2,        // size, number of components per vertex in the buffer object
+      gl.FLOAT, // the data type
+      false,    // normalize
+      0,        // stride between bytes
+      0         // offset (in bytes)
     );
     gl.enableVertexAttribArray(program.getAttribLocation('aVertexPosition'));
   }
