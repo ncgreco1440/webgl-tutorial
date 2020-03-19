@@ -3,3 +3,26 @@ html, body {
   padding: 0 !important;
   overflow: hidden;
 }
+
+#ui-container {
+  top: 0;
+  left: 0;
+  position: absolute;
+  z-index: 10001;
+  height: 100%;
+  width: 100%;
+  display: grid;
+  grid-template-columns: [left-gutter] 8px [main-stage] auto [right-gutter] 8px;
+  grid-template-rows: [top-gutter] 8px [main-stage] auto [bottom-gutter] 8px;
+}
+
+#utility-buttons {
+  grid-column-start: main-stage;
+  grid-row-start: main-stage;
+}
+
+#canvas-container {
+  display: grid;
+  justify-content: center;
+  align-items: center;
+}

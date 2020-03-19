@@ -1,37 +1,40 @@
-import { gameloop } from './gameloop';
-import { Canvas } from './canvas';
+import { Canvas, CanvasAspectRatio } from './canvas';
 import { mat4 } from 'gl-matrix';
+import { ShaderProgram, FragmentShader, VertexShader } from './shader';
+
+// Camera
+const fieldOfView = 45 * Math.PI / 180;
+const aspect = CanvasAspectRatio.SIXTEEN_BY_NINE.ratio;
+const zNear = 0.1;
+const zFar = 1000.0;
+const projectionMatrix = mat4.create();
 
 export async function main() {
-  const MAIN_CANVAS = new Canvas('glCanvas');
+  const MAIN_CANVAS = new Canvas('glCanvas', CanvasAspectRatio.SIXTEEN_BY_NINE);
   MAIN_CANVAS.append();
-  // gameloop();
-
-  const canvas = document.querySelector('#glCanvas') as HTMLCanvasElement;
-
-  const gl = canvas.getContext('webgl');
+  const gl = MAIN_CANVAS.getContext();
 
   if (gl == null) {
     alert('Unable to initialize WebGL. Your browser or machine will not support it.');
     return;
   }
 
-  const shaderProgram = initShaderProgram(gl, vsShader, fsShader);
+  {
+    const shaderProgram = new ShaderProgram(
+      gl, 
+      new VertexShader(gl, vsShader), 
+      new FragmentShader(gl, fsShader));
 
-  const programInfo = {
-    program: shaderProgram,
-    attrLocations: {
-      vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition')
-    },
-    uniformLocations: {
-      projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
-      modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix')
+    const buffers = initBuffers(gl);
+
+    function loop() {
+      draw(gl, shaderProgram, buffers);
+      window.requestAnimationFrame(loop);
     }
+
+    loop();
   }
-
-  const buffers = initBuffers(gl);
-
-  draw(gl, programInfo, buffers);
+  
 }
 
 const vsShader = `
@@ -47,40 +50,10 @@ void main() {
 
 const fsShader = `
 void main() {
-  gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+  gl_FragColor = vec4(0.25, 0.5, 1.0, 1.0);
 }
 `;
 
-function initShaderProgram(gl: WebGLRenderingContext, vsSource: string, fsSource: string): WebGLProgram {
-  const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-  const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
-
-  const shaderProgram = gl.createProgram();
-  gl.attachShader(shaderProgram, vertexShader);
-  gl.attachShader(shaderProgram, fragmentShader);
-  gl.linkProgram(shaderProgram);
-
-  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
-    return null;
-  }
-
-  return shaderProgram;
-}
-
-function loadShader(gl: WebGLRenderingContext, type: GLenum, source: string): WebGLShader {
-  const shader = gl.createShader(type);
-  gl.shaderSource(shader, source);
-  gl.compileShader(shader);
-
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    alert('An error occured compiling the shaders: ' + gl.getShaderInfoLog(shader));
-    gl.deleteShader(shader);
-    return null;
-  }
-
-  return shader;
-}
 
 function initBuffers(gl: WebGLRenderingContext) {
   const positionBuffer = gl.createBuffer();
@@ -90,8 +63,7 @@ function initBuffers(gl: WebGLRenderingContext) {
   const positions = [
     -1.0, 1.0,
     1.0, 1.0,
-    -1.0, -1.0,
-    1.0, -1.0
+    -1.0, -1.0
   ];
 
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
@@ -101,19 +73,13 @@ function initBuffers(gl: WebGLRenderingContext) {
   }
 }
 
-function draw(gl: WebGLRenderingContext, programInfo, buffers) {
+function draw(gl: WebGLRenderingContext, program: ShaderProgram, buffers) {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clearDepth(1.0);
   gl.enable(gl.DEPTH_TEST);
   gl.depthFunc(gl.LEQUAL);
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  const fieldOfView = 45 * Math.PI / 180;
-  const aspect = gl.canvas.width / gl.canvas.height;
-  const zNear = 0.1;
-  const zFar = 1000.0;
-  const projectionMatrix = mat4.create();
 
   mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
 
@@ -132,24 +98,24 @@ function draw(gl: WebGLRenderingContext, programInfo, buffers) {
   
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
     gl.vertexAttribPointer(
-      programInfo.attrLocations.vertexPosition,
+      program.getAttribLocation('aVertexPosition'),
       numComponents,
       type,
       normalize,
       stride,
       offset
     );
-    gl.enableVertexAttribArray(programInfo.attrLocations.vertexPosition);
+    gl.enableVertexAttribArray(program.getAttribLocation('aVertexPosition'));
   }
 
-  gl.useProgram(programInfo.program);
+  gl.useProgram(program.handle);
 
-  gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
-  gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
+  gl.uniformMatrix4fv(program.getUniformLocation('uProjectionMatrix'), false, projectionMatrix);
+  gl.uniformMatrix4fv(program.getUniformLocation('uModelViewMatrix'), false, modelViewMatrix);
 
   {
     const offset = 0;
-    const vertexCount = 4;
+    const vertexCount = 3;
     gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
   }
 }

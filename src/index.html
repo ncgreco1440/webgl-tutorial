@@ -6,5 +6,30 @@
   <title>Document</title>
 </head>
 <body>
+  <!-- UI -->
+  <div id="ui-container">
+    <div id="utility-buttons">
+      <button onClick="toggleFullscreen()">Toggle Fullscreen</button>
+    </div>
+  </div>
+  <!-- UI -->
+
+  <!-- Canvas Container -->
+  <div id="canvas-container"></div>
+  <!-- Canvas Container -->
+
+  <script type="text/javascript">
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().then({}).catch(_ => {
+          alert(`Error attempting to enable full-screen mode:`);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+  </script>
 </body>
 </html>
